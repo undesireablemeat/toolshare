@@ -8,7 +8,7 @@
   body { background: white; color: black; font-family: "Times New Roman", serif; max-width: 700px; margin: 20px auto; padding: 0 10px; }
   button { background: white; color: black; border: 1px solid black; border-radius: 0; padding: 4px 12px; font-family: inherit; font-size: inherit; }
   button:hover { background: #ddd; }
-  input, textarea, select { background: white; color: black; border: 1px solid black; border-radius: 0; font-family: inherit; font-size: inherit; }
+  input, textarea, select { background: white; color: black; border: 1px solid black; border-radius: 0; font-family: inherit; font-size: inherit; margin-top:.5rem; margin-bottom:.5rem;}
   table { border-collapse: collapse; width: 100%; }
   th, td { border: 1px solid black; padding: 4px; text-align: left; vertical-align: top; }
 </style>
@@ -29,20 +29,21 @@
 <div id="lend" hidden>
   <p><a href="#" onclick="show('home'); return false;">Back</a></p>
   <h2>List a tool</h2>
-  <small>Share a tool with your community! <p><i>Note: We are unable to safeguard your tools or enforce returns.</i></p></small>
+  <p><small>Share a tool with your community! <p><i>Note: We are unable to safeguard your tools or enforce returns.</i></p></small></p>
   <form id="lendForm" autocomplete="off">
-    <p>Brand:<br><input name="brand" required maxlength="80" size="30">
-    <small>If a generic tool like a rake or shovel, leave blank</small></p>
-    <p>Model:<br><input name="model" required maxlength="80" size="30">
-    <small>eg. 'V18 Driver'or just 'rake'</small></p>
-    <p>Category:<br><input name="category" list="cats" required maxlength="40" size="30"></p>
+    <label>Brand:<br><input name="brand" alt="brand" placeholder="eg. 'none' or 'Ryobi'" required maxlength="80" size="30"></label>
+    <br>
+    <label>Model:<br><input name="model" alt="model" placeholder="eg. 'V18 Driver'or just 'rake'" required maxlength="80" size="30"></label>
+    <br>
+    <label>Category:<br><input name="category" alt="category" list="cats" required maxlength="40" size="30"></label>
     <datalist id="cats"></datalist>
-    <p>Notes:<br><textarea name="notes" maxlength="500" rows="4" cols="40"></textarea>
-    <small>Anything you'd like to add? eg. "return within 3 days" or "it smells bad"</small></p>
-    <p>General area (optional):<br><input name="area" maxlength="60" size="30">
-    <small>Neighborhood, township, etc; be vague</small></p>
-    <p>Your email:<br><input name="email" type="email" required maxlength="254" size="30"><br>
-    <small>Never shown publicly. Borrowers reach you through a relay. Your email address is only revealed if you reply.</small></p>
+    <br>
+    <label>Notes:<br><textarea name="notes" alt="notes" placeholder="eg. 'return within 3 days' or 'it smells bad'" maxlength="500" rows="4" cols="40"></textarea></label>
+    <br>
+    <label>General area (optional):<br><input name="area" alt="area" placeholder="eg. 'Bartonville' or 'Center Bluff'" maxlength="60" size="30"></label>
+    <br>
+    <label>Your email:<br><input name="email" alt="email" type="email" required maxlength="254" size="30"><br>
+    <p><small>Never shown publicly. Borrowers reach you through a relay. Your email address is only revealed if you reply.</small></p></label>
     <input name="website" tabindex="-1" autocomplete="off" style="position:absolute; left:-9999px;">
     <p><button type="submit">Submit</button></p>
     <p id="lendMsg"></p>
@@ -52,10 +53,12 @@
 <div id="browse" hidden>
   <p><a href="#" onclick="show('home'); return false;">Back</a></p>
   <h2>Available tools</h2>
-  <small>Want something removed or edited? Click <a href="#" onclick="show('edit'); return false;">HERE</a>!</small>
+  <p><small>Want something removed or edited? Click <a href="#" onclick="show('edit'); return false;">HERE</a>!</small></p>
   <p>
-    Search: <input id="q" type="text" size="20">
-    Category: <select id="catFilter"><option value="">All</option></select>
+    <label>
+    Search: <input id="q" type="text" size="20"></label>
+    <label>
+    Category: <select id="catFilter"><option value="">All</option></select></label>
   </p>
   <div id="list"></div>
 </div>
@@ -63,12 +66,16 @@
 <div id="edit" hidden>
   <p><a href="#" onclick="show('browse'); return false;">Back</a></p>
   <h2>Request an edit</h2>
-  <small>No longer want a tool listed? Made a typo? Spread misinformation? I can fix it.</small>
+  <p><small>No longer want a tool listed? Made a typo? Spread misinformation? I can fix it.</small></p>
   <form id="editForm" autocomplete="off">
-    <p>Tool as it appears on site:<br><input name="original_tool" required maxlength="80" size="30"></p>
-    <p>What you want changed:<br><input name="edit" required maxlength="1000" size="30"></p>
-    <p>Your email (the one you listed the tool with):<br><input name="email" type="email" required maxlength="254" size="30"></p>
-    <p>Message:<br><textarea name="message" required maxlength="1000" rows="5" cols="40"></textarea></p>
+    <label>Tool as it appears on site:<br><input name="original_tool" alt="original_tool" required maxlength="80" size="30"></label>
+    <br>
+    <label>What you want changed:<br><input name="edit" alt="edit" required maxlength="1000" size="30"></label>
+    <br>
+    <label>Your email (the one you listed the tool with):<br><input name="email" alt="email" type="email" required maxlength="254" size="30"></label>
+    <br>
+    <label>Message:<br><textarea name="message" alt="message" required maxlength="1000" rows="5" cols="40"></textarea></label>
+    <br>
     <input name="website" tabindex="-1" autocomplete="off" style="position:absolute; left:-9999px;">
     <p><button type="submit">Send</button></p>
     <p id="editMsg"></p>
@@ -79,10 +86,10 @@
   <p><a href="#" onclick="show('browse'); return false;">Back</a></p>
   <h2 id="reqTitle"></h2>
   <form id="reqForm" autocomplete="off">
-    <p>Your name:<br><input name="name" required maxlength="80" size="30"></p>
-    <p>Your email:<br><input name="email" type="email" required maxlength="254" size="30"></p>
-    <p>Message:<br><textarea name="message" required maxlength="1000" rows="5" cols="40"></textarea></p>
-    <input name="website" tabindex="-1" autocomplete="off" style="position:absolute; left:-9999px;">
+    <label>Your name:<br><input name="name" alt="name" required maxlength="80" size="30"></label>
+    <label>Your email:<br><input name="email" alt="email" type="email" required maxlength="254" size="30"></label>
+    <label>Message:<br><textarea name="message" alt="message" required maxlength="1000" rows="5" cols="40"></textarea></label>
+    <input name="website" aria-label="website" tabindex="-1" autocomplete="off" style="position:absolute; left:-9999px;">
     <p><button type="submit">Send</button></p>
     <p id="reqMsg"></p>
   </form>
