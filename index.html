@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toolshare</title>
+<style>
+  body { background: white; color: black; font-family: "Times New Roman", serif; max-width: 700px; margin: 20px auto; padding: 0 10px; }
+  button { background: white; color: black; border: 1px solid black; border-radius: 0; padding: 4px 12px; font-family: inherit; font-size: inherit; }
+  button:hover { background: #ddd; }
+  input, textarea, select { background: white; color: black; border: 1px solid black; border-radius: 0; font-family: inherit; font-size: inherit; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid black; padding: 4px; text-align: left; vertical-align: top; }
+</style>
+</head>
+<body>
+
+<h1>Toolshare</h1>
+<hr>
+
+<div id="home">
+  <p>Borrow what you need. Share what you have.</p>
+  <p>
+    <button onclick="show('lend')">I <b>have</b> a tool</button>
+    <button onclick="show('browse')">I <b>need</b> a tool</button>
+  </p>
+</div>
+
+<div id="lend" hidden>
+  <p><a href="#" onclick="show('home'); return false;">Back</a></p>
+  <h2>List a tool</h2>
+  <small>Share a tool with your community! <p><i>Note: We are unable to safeguard your tools or enforce returns.</i></p></small>
+  <form id="lendForm" autocomplete="off">
+    <p>Brand:<br><input name="brand" required maxlength="80" size="30">
+    <small>If a generic tool like a rake or shovel, leave blank</small></p>
+    <p>Model:<br><input name="model" required maxlength="80" size="30">
+    <small>eg. 'V18 Driver'or just 'rake'</small></p>
+    <p>Category:<br><input name="category" list="cats" required maxlength="40" size="30"></p>
+    <datalist id="cats"></datalist>
+    <p>Notes:<br><textarea name="notes" maxlength="500" rows="4" cols="40"></textarea>
+    <small>Anything you'd like to add? eg. "return within 3 days" or "it smells bad"</small></p>
+    <p>General area (optional):<br><input name="area" maxlength="60" size="30">
+    <small>Neighborhood, township, etc; be vague</small></p>
+    <p>Your email:<br><input name="email" type="email" required maxlength="254" size="30"><br>
+    <small>Never shown publicly. Borrowers reach you through a relay. Your email address is only revealed if you reply.</small></p>
+    <input name="website" tabindex="-1" autocomplete="off" style="position:absolute; left:-9999px;">
+    <p><button type="submit">Submit</button></p>
+    <p id="lendMsg"></p>
+  </form>
+</div>
+
+<div id="browse" hidden>
+  <p><a href="#" onclick="show('home'); return false;">Back</a></p>
+  <h2>Available tools</h2>
+  <small>Want something removed or edited? Click <a href="#" onclick="show('edit'); return false;">HERE</a>!</small>
+  <p>
+    Search: <input id="q" type="text" size="20">
+    Category: <select id="catFilter"><option value="">All</option></select>
+  </p>
+  <div id="list"></div>
+</div>
+
+<div id="edit" hidden>
+  <p><a href="#" onclick="show('browse'); return false;">Back</a></p>
+  <h2>Request an edit</h2>
+  <small>No longer want a tool listed? Made a typo? Spread misinformation? I can fix it.</small>
+  <form id="editForm" autocomplete="off">
+    <p>Tool as it appears on site:<br><input name="original_tool" required maxlength="80" size="30"></p>
+    <p>What you want changed:<br><input name="edit" required maxlength="1000" size="30"></p>
+    <p>Your email (the one you listed the tool with):<br><input name="email" type="email" required maxlength="254" size="30"></p>
+    <p>Message:<br><textarea name="message" required maxlength="1000" rows="5" cols="40"></textarea></p>
+    <input name="website" tabindex="-1" autocomplete="off" style="position:absolute; left:-9999px;">
+    <p><button type="submit">Send</button></p>
+    <p id="editMsg"></p>
+  </form>
+</div>
+
+<div id="request" hidden>
+  <p><a href="#" onclick="show('browse'); return false;">Back</a></p>
+  <h2 id="reqTitle"></h2>
+  <form id="reqForm" autocomplete="off">
+    <p>Your name:<br><input name="name" required maxlength="80" size="30"></p>
+    <p>Your email:<br><input name="email" type="email" required maxlength="254" size="30"></p>
+    <p>Message:<br><textarea name="message" required maxlength="1000" rows="5" cols="40"></textarea></p>
+    <input name="website" tabindex="-1" autocomplete="off" style="position:absolute; left:-9999px;">
+    <p><button type="submit">Send</button></p>
+    <p id="reqMsg"></p>
+  </form>
+</div>
+
+<script>
+var API_URL = 'https://script.google.com/macros/s/AKfycbxNdvlSNjlGrPMqs04l8IiowQKwf9nN_Cse0JyIyr8InKda2H82GyNancEymN3z8KWT/exec';
+
+var tools = [];
+var currentId = null;
+
+function $(s) { return document.querySelector(s); }
+
+function show(view) {
+  var views = ['home', 'lend', 'browse', 'request', 'edit'];
+  for (var i = 0; i < views.length; i++) $('#' + views[i]).hidden = (views[i] !== view);
+  if (view === 'browse' || view === 'lend') loadTools();
+}
+
+function post(data) {
+  // text/plain avoids a CORS preflight, which Apps Script can't answer
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(data)
+  }).then(function (r) { return r.json(); });
+}
+
+function loadTools() {
+  fetch(API_URL).then(function (r) { return r.json(); }).then(function (d) {
+    tools = d.tools || [];
+    var cats = [];
+    tools.forEach(function (t) { if (cats.indexOf(t.category) < 0) cats.push(t.category); });
+    cats.sort();
+    $('#cats').replaceChildren.apply($('#cats'), cats.map(function (c) {
+      var o = document.createElement('option'); o.value = c; return o;
+    }));
+    var sel = $('#catFilter'), keep = sel.value;
+    sel.replaceChildren.apply(sel, [new Option('All', '')].concat(cats.map(function (c) { return new Option(c, c); })));
+    sel.value = cats.indexOf(keep) >= 0 ? keep : '';
+    render();
+  }).catch(function () {
+    $('#list').textContent = 'Could not load tools. Try again later.';
+  });
+}
+
+function cell(tr, text) {
+  var td = document.createElement('td');
+  td.textContent = text || '';
+  tr.appendChild(td);
+  return td;
+}
+
+function render() {
+  var q = $('#q').value.toLowerCase();
+  var cat = $('#catFilter').value;
+  var hits = tools.filter(function (t) {
+    var text = [t.brand, t.model, t.category, t.notes, t.area].join(' ').toLowerCase();
+    return (!cat || t.category === cat) && (!q || text.indexOf(q) >= 0);
+  });
+  var list = $('#list');
+  list.textContent = '';
+  if (!hits.length) {
+    list.textContent = tools.length ? 'No matches.' : 'No tools listed yet.';
+    return;
+  }
+  var table = document.createElement('table');
+  var head = document.createElement('tr');
+  ['Brand', 'Model', 'Category', 'Area', 'Notes', ''].forEach(function (h) {
+    var th = document.createElement('th'); th.textContent = h; head.appendChild(th);
+  });
+  table.appendChild(head);
+  hits.forEach(function (t) {
+    var tr = document.createElement('tr');
+    cell(tr, t.brand); cell(tr, t.model); cell(tr, t.category); cell(tr, t.area); cell(tr, t.notes);
+    var td = document.createElement('td');
+    var b = document.createElement('button');
+    b.textContent = 'Request';
+    b.onclick = function () { openRequest(t); };
+    td.appendChild(b);
+    tr.appendChild(td);
+    table.appendChild(tr);
+  });
+  list.appendChild(table);
+}
+
+$('#q').addEventListener('input', render);
+$('#catFilter').addEventListener('change', render);
+
+$('#lendForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var f = e.target, btn = f.querySelector('button');
+  var data = Object.fromEntries(new FormData(f));
+  data.action = 'lend';
+  var label = btn.textContent;
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+  $('#lendMsg').textContent = '';
+  post(data).then(function (res) {
+    if (res.ok) { f.reset(); $('#lendMsg').textContent = 'Thanks. Your tool will appear once approved.'; }
+    else $('#lendMsg').textContent = res.error || 'Something went wrong.';
+  }).catch(function () {
+    $('#lendMsg').textContent = 'Network error. Try again.';
+  }).then(function () { btn.textContent = label; btn.disabled = false; });
+});
+
+function openRequest(t) {
+  currentId = t.id;
+  $('#reqTitle').textContent = 'Request: ' + t.brand + ' ' + t.model;
+  $('#reqMsg').textContent = '';
+  show('request');
+}
+
+$('#reqForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var f = e.target, btn = f.querySelector('button');
+  var data = Object.fromEntries(new FormData(f));
+  data.action = 'request';
+  data.id = currentId;
+  var label = btn.textContent;
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+  $('#reqMsg').textContent = '';
+  post(data).then(function (res) {
+    if (res.ok) { f.reset(); $('#reqMsg').textContent = 'Sent. The owner will reply by email if interested.'; }
+    else $('#reqMsg').textContent = res.error || 'Something went wrong.';
+  }).catch(function () {
+    $('#reqMsg').textContent = 'Network error. Try again.';
+  }).then(function () { btn.textContent = label; btn.disabled = false; });
+});
+
+$('#editForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var f = e.target, btn = f.querySelector('button');
+  var data = Object.fromEntries(new FormData(f));
+  data.action = 'edit';
+  var label = btn.textContent;
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+  $('#editMsg').textContent = '';
+  post(data).then(function (res) {
+    if (res.ok) { f.reset(); $('#editMsg').textContent = 'Sent. Changes are made by hand, please give our volunteers time to edit.'; }
+    else $('#editMsg').textContent = res.error || 'Something went wrong.';
+  }).catch(function () {
+    $('#editMsg').textContent = 'Network error. Try again.';
+  }).then(function () { btn.textContent = label; btn.disabled = false; });
+});
+</script>
+
+</body>
+</html>
